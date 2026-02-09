@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use pumpkin::{
     command::{
         args::{block::BlockArgumentConsumer, ConsumedArgs, FindArg},
-        dispatcher::CommandError,
         CommandExecutor, CommandResult, CommandSender,
     },
     server::Server,

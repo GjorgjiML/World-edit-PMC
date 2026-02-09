@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::sync::{LazyLock, Mutex};
+use std::path::PathBuf;
+use std::sync::{LazyLock, Mutex, OnceLock};
 
 use pumpkin::{
     command::{dispatcher::CommandError, CommandSender},
@@ -14,6 +15,9 @@ use uuid::Uuid;
 
 /// Maximum number of blocks that can be modified in a single operation.
 pub const MAX_BLOCKS: i64 = 100_000;
+
+/// Schematics directory path, set during plugin load.
+pub static SCHEMATICS_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 // ============================================================================
 // Data Structures

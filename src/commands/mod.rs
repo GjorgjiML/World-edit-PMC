@@ -1,11 +1,12 @@
 pub mod clipboard;
 pub mod history;
 pub mod region;
+pub mod schematic;
 pub mod selection;
 
 use pumpkin::{
     command::{
-        args::block::BlockArgumentConsumer,
+        args::{block::BlockArgumentConsumer, simple::SimpleArgConsumer},
         tree::{
             builder::{argument, literal},
             CommandTree,
@@ -16,8 +17,11 @@ use pumpkin::{
 use clipboard::{CopyExecutor, PasteExecutor};
 use history::UndoExecutor;
 use region::{
-    ClearExecutor, HollowExecutor, ReplaceExecutor, SetExecutor, WallsExecutor,
-    ARG_BLOCK, ARG_FROM, ARG_TO,
+    ClearExecutor, HollowExecutor, ReplaceExecutor, SetExecutor, WallsExecutor, ARG_BLOCK,
+    ARG_FROM, ARG_TO,
+};
+use schematic::{
+    SchemDeleteExecutor, SchemListExecutor, SchemLoadExecutor, SchemSaveExecutor, ARG_SCHEM_NAME,
 };
 use selection::{Pos1Executor, Pos2Executor, SizeExecutor};
 
@@ -50,4 +54,24 @@ pub fn build_command_tree() -> CommandTree {
         .then(literal("paste").execute(PasteExecutor))
         // History
         .then(literal("undo").execute(UndoExecutor))
+        // Schematics
+        .then(
+            literal("schem")
+                .then(
+                    literal("load").then(
+                        argument(ARG_SCHEM_NAME, SimpleArgConsumer).execute(SchemLoadExecutor),
+                    ),
+                )
+                .then(
+                    literal("save").then(
+                        argument(ARG_SCHEM_NAME, SimpleArgConsumer).execute(SchemSaveExecutor),
+                    ),
+                )
+                .then(literal("list").execute(SchemListExecutor))
+                .then(
+                    literal("delete").then(
+                        argument(ARG_SCHEM_NAME, SimpleArgConsumer).execute(SchemDeleteExecutor),
+                    ),
+                ),
+        )
 }

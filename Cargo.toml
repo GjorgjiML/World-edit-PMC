@@ -24,5 +24,9 @@ log = "0.4"
 # UUID for player identification
 uuid = "1"
 
+# NBT handling for schematics
+pumpkin-nbt = { path = "../pumpkin-nbt", package = "pumpkin-nbt" }
+flate2 = "1"
+
 [profile.release]
 lto = true

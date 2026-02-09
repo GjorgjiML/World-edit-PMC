@@ -1,6 +1,8 @@
 use async_trait::async_trait;
 use pumpkin::{
-    command::{args::ConsumedArgs, CommandExecutor, CommandResult, CommandSender},
+    command::{
+        args::ConsumedArgs, dispatcher::CommandError, CommandExecutor, CommandResult, CommandSender,
+    },
     server::Server,
 };
 use pumpkin_util::text::{color::NamedColor, TextComponent};
