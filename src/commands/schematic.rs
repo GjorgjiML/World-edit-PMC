@@ -45,18 +45,32 @@ impl CommandExecutor for SchemLoadExecutor {
 
             let schematics_dir = get_schematics_dir()?;
 
-            // Build file path (add .schem extension if not present)
-            let filename = if schem_name.ends_with(".schem") {
-                schem_name.to_string()
+            // Resolve path: accept name with or without .schem/.litematic extension
+            let file_path = if schem_name.ends_with(".schem") || schem_name.ends_with(".litematic") {
+                schematics_dir.join(schem_name)
             } else {
-                format!("{schem_name}.schem")
+                let schem_path = schematics_dir.join(format!("{schem_name}.schem"));
+                let litematic_path = schematics_dir.join(format!("{schem_name}.litematic"));
+                if schem_path.exists() {
+                    schem_path
+                } else if litematic_path.exists() {
+                    litematic_path
+                } else {
+                    schematics_dir.join(format!("{schem_name}.schem")) // will fail below
+                }
             };
-            let file_path = schematics_dir.join(&filename);
+
+            let filename = file_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(schem_name);
 
             if !file_path.exists() {
                 return Err(CommandError::CommandFailed(
-                    TextComponent::text(format!("Schematic '{filename}' not found."))
-                        .color_named(NamedColor::Red),
+                    TextComponent::text(format!(
+                        "Schematic '{schem_name}' not found (tried .schem and .litematic)."
+                    ))
+                    .color_named(NamedColor::Red),
                 ));
             }
 
@@ -212,7 +226,7 @@ impl CommandExecutor for SchemListExecutor {
             let mut schem_files: Vec<String> = Vec::new();
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.extension().is_some_and(|ext| ext == "schem") {
+                if path.extension().is_some_and(|ext| ext == "schem" || ext == "litematic") {
                     if let Some(name) = path.file_stem() {
                         schem_files.push(name.to_string_lossy().to_string());
                     }
@@ -273,17 +287,32 @@ impl CommandExecutor for SchemDeleteExecutor {
 
             let schematics_dir = get_schematics_dir()?;
 
-            let filename = if schem_name.ends_with(".schem") {
-                schem_name.to_string()
+            // Resolve path: try .schem then .litematic if no extension given
+            let file_path = if schem_name.ends_with(".schem") || schem_name.ends_with(".litematic") {
+                schematics_dir.join(schem_name)
             } else {
-                format!("{schem_name}.schem")
+                let schem_path = schematics_dir.join(format!("{schem_name}.schem"));
+                let litematic_path = schematics_dir.join(format!("{schem_name}.litematic"));
+                if schem_path.exists() {
+                    schem_path
+                } else if litematic_path.exists() {
+                    litematic_path
+                } else {
+                    schematics_dir.join(format!("{schem_name}.schem"))
+                }
             };
-            let file_path = schematics_dir.join(&filename);
+
+            let filename = file_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(schem_name);
 
             if !file_path.exists() {
                 return Err(CommandError::CommandFailed(
-                    TextComponent::text(format!("Schematic '{filename}' not found."))
-                        .color_named(NamedColor::Red),
+                    TextComponent::text(format!(
+                        "Schematic '{schem_name}' not found (tried .schem and .litematic)."
+                    ))
+                    .color_named(NamedColor::Red),
                 ));
             }
 

@@ -1,3 +1,5 @@
+//! Pumpkin WorldEdit plugin: region selection, block operations, clipboard, undo, and schematics (.schem / .litematic).
+
 mod commands;
 mod schematic;
 mod state;

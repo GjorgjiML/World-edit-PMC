@@ -1,66 +1,134 @@
 # Pumpkin WorldEdit Plugin
 
-A simple WorldEdit plugin for the [Pumpkin](https://github.com/Pumpkin-MC/Pumpkin) Minecraft server, written in Rust.
+A WorldEdit-style plugin for the [Pumpkin](https://github.com/Pumpkin-MC/Pumpkin) Minecraft server, written in Rust. Supports region selection, block operations, clipboard, undo, and schematic load/save in both Sponge (`.schem`) and Litematica (`.litematic`) formats.
 
 ## Features
 
-- **Region selection** with pos1/pos2 commands
-- **Block manipulation**: set, replace, walls, clear, hollow
-- **Clipboard**: copy and paste with relative positioning
-- **Undo** support for all block-modifying operations
-- Per-player state (each player has their own selection, clipboard, and undo history)
-- Selection size limit (100,000 blocks) to prevent server lag
+- **Region selection** — Set two corners with `pos1` and `pos2`
+- **Block operations** — Set, replace, walls, clear, hollow
+- **Clipboard** — Copy and paste with relative positioning
+- **Undo** — Restore the last block-modifying operation
+- **Schematics** — Load and save structures from `.schem` (Sponge v2/v3) and `.litematic` (Litematica) files
+- Per-player state (selection, clipboard, undo)
+- Selection limit of 100,000 blocks to avoid server lag
 
 ## Commands
 
-All commands use the `/we` (or `/worldedit`) prefix:
+All commands use the `/we` or `/worldedit` prefix.
 
-| Command | Description |
-|---|---|
-| `/we pos1` | Set position 1 at your feet |
-| `/we pos2` | Set position 2 at your feet |
-| `/we set <block>` | Fill selection with a block |
-| `/we replace <from> <to>` | Replace one block type with another |
-| `/we walls <block>` | Build walls around selection (X/Z edges) |
-| `/we copy` | Copy selection to clipboard |
-| `/we paste` | Paste clipboard at your position |
-| `/we undo` | Undo the last operation |
-| `/we size` | Show selection dimensions |
-| `/we clear` | Set all blocks in selection to air |
-| `/we hollow` | Remove the interior of the selection |
+### Selection
+
+| Command       | Description                          |
+|---------------|--------------------------------------|
+| `/we pos1`    | Set position 1 at your feet          |
+| `/we pos2`    | Set position 2 at your feet          |
+| `/we size`    | Show selection dimensions            |
+
+### Region editing
+
+| Command                    | Description                              |
+|----------------------------|------------------------------------------|
+| `/we set <block>`          | Fill selection with a block              |
+| `/we replace <from> <to>`  | Replace one block type with another      |
+| `/we walls <block>`        | Build walls on X/Z edges of selection    |
+| `/we clear`                | Set all blocks in selection to air       |
+| `/we hollow`               | Remove interior, keep walls              |
+
+### Clipboard & history
+
+| Command       | Description                          |
+|---------------|--------------------------------------|
+| `/we copy`    | Copy selection to clipboard          |
+| `/we paste`   | Paste clipboard at your position     |
+| `/we undo`    | Undo the last operation              |
+
+### Schematics
+
+| Command                  | Description                                      |
+|--------------------------|--------------------------------------------------|
+| `/we schem load <name>`  | Load a schematic into clipboard (`.schem` or `.litematic`) |
+| `/we schem save <name>`  | Save clipboard as a `.schem` file                |
+| `/we schem list`         | List saved schematics                            |
+| `/we schem delete <name>`| Delete a schematic file                          |
+
+Schematic files are stored in `plugins/pumpkin-worldedit/schematics/`. For load/delete you can use the name with or without extension (e.g. `castle` or `castle.litematic`).
+
+## Supported schematic formats
+
+- **Sponge Schematic (`.schem`)** — Versions 2 and 3 (gzipped NBT, varint block data). Compatible with WorldEdit and many other tools.
+- **Litematica (`.litematic`)** — Gzipped NBT with regions, packed long-array block states, and optional metadata (position/size fallbacks for compatibility).
 
 ## Requirements
 
-- [Pumpkin](https://github.com/Pumpkin-MC/Pumpkin) Minecraft server (built from source)
-- Rust toolchain (for building the plugin)
-- Operator permission level 2 to use commands
+- [Pumpkin](https://github.com/Pumpkin-MC/Pumpkin) server (built from source)
+- Rust toolchain to build the plugin
+- Permission `pumpkin-worldedit:command.we` (default: OP level 2)
 
 ## Building
+
+From the `pumpkin-worldedit` directory (or with path dependencies correct from the Pumpkin repo root):
 
 ```bash
 cargo build --release
 ```
 
-The compiled plugin DLL/SO will be in `target/release/`:
+Output:
 
-- **Windows**: `pumpkin_worldedit.dll`
-- **Linux**: `libpumpkin_worldedit.so`
-- **macOS**: `libpumpkin_worldedit.dylib`
+- **Windows**: `target/release/pumpkin_worldedit.dll`
+- **Linux**: `target/release/libpumpkin_worldedit.so`
+- **macOS**: `target/release/libpumpkin_worldedit.dylib`
 
 ## Installation
 
-Copy the compiled plugin binary into the `plugins/` directory of your Pumpkin server and start/restart the server.
+1. Copy the built plugin into the Pumpkin server `plugins/` folder.
+2. Start or restart the server. The plugin will create `plugins/pumpkin-worldedit/schematics/` on first load.
 
-## Usage Example
+## Usage examples
+
+**Basic region and paste:**
 
 ```
-/we pos1          # Stand at one corner and set position 1
-/we pos2          # Move to opposite corner and set position 2
-/we set stone     # Fill the entire selection with stone
-/we undo          # Undo if you made a mistake
-/we walls oak_planks  # Build walls around the selection
-/we copy          # Copy the selection
-/we paste         # Paste at a new location
+/we pos1
+/we pos2
+/we set stone
+/we copy
+/we paste
+/we undo
+```
+
+**Load and paste a schematic:**
+
+```
+/we schem load castle
+/we paste
+```
+
+**Save a selection as schematic:**
+
+```
+/we pos1
+/we pos2
+/we copy
+/we schem save my_build
+```
+
+## Project structure
+
+```
+pumpkin-worldedit/
+├── src/
+│   ├── lib.rs              # Plugin entry, on_load, command registration
+│   ├── state.rs            # Per-player state, selection helpers
+│   ├── schematic.rs        # .schem / .litematic load & save
+│   └── commands/
+│       ├── mod.rs          # Command tree builder
+│       ├── selection.rs    # pos1, pos2, size
+│       ├── region.rs       # set, replace, walls, clear, hollow
+│       ├── clipboard.rs    # copy, paste
+│       ├── history.rs      # undo
+│       └── schematic.rs    # schem load/save/list/delete
+├── Cargo.toml
+└── README.md
 ```
 
 ## License
