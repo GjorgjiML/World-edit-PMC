@@ -1,0 +1,28 @@
+[package]
+name = "pumpkin-worldedit"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Pumpkin crates (local path references)
+pumpkin = { path = "../pumpkin", package = "pumpkin" }
+pumpkin-util = { path = "../pumpkin-util", package = "pumpkin-util" }
+pumpkin-data = { path = "../pumpkin-data", package = "pumpkin-data" }
+pumpkin-world = { path = "../pumpkin-world", package = "pumpkin-world" }
+pumpkin-api-macros = { path = "../pumpkin-api-macros", package = "pumpkin-api-macros" }
+
+# Async runtime and traits
+async-trait = "0.1"
+tokio = { version = "1", features = ["full"] }
+
+# Logging
+log = "0.4"
+
+# UUID for player identification
+uuid = "1"
+
+[profile.release]
+lto = true
